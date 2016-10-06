@@ -1,4 +1,5 @@
 ﻿using Assets.UltimateIsometricToolkit.Scripts.External;
+using Assets.UltimateIsometricToolkit.Scripts.Utils;
 using UnityEngine;
 
 namespace Assets.UltimateIsometricToolkit.Scripts.Core {
@@ -8,16 +9,34 @@ namespace Assets.UltimateIsometricToolkit.Scripts.Core {
 	[ExecuteInEditMode]
 	public class IsoSorting : Singleton<IsoSorting> {
 		[SerializeField] private SortingStrategy _sortingStrategy;
-		[SerializeField, HideInInspector] private static float _isometricAngle = 25.112f; //isometric angle
 		[HideInInspector]public bool Dirty = true;
 
+		
+		[SerializeField, HideInInspector] private float _isoAngle = 26.565f; //add
+
+		
 		[ExposeProperty]
-		public static float IsometricAngle {
-			get { return _isometricAngle; }
-			set { _isometricAngle = value; }
+		public float IsoAngle { 
+			get { return _isoAngle; }
+			set {
+				Isometric._isoAngle = Mathf.Clamp(value, 0, 90);
+				_isoAngle = Mathf.Clamp(value, 0, 90);
+			}
 		}
 
-	
+		void OnEnable() {
+			Isometric.IsoAngle = IsoAngle;
+		}
+
+		void OnDisable() {
+			Isometric.IsoAngle = IsoAngle;
+		}
+		
+		void Start() {
+			IsoAngle = _isoAngle;
+		}
+
+
 		public void Resolve(IsoTransform isoTransform) {
 			Dirty = true;
 			if (_sortingStrategy != null)
@@ -25,6 +44,8 @@ namespace Assets.UltimateIsometricToolkit.Scripts.Core {
 			else
 				Debug.LogError("Missing SortingStrategy on IsoSorting component");
 		}
+
+		
 
 		public void Update() {
 			if (!Dirty)
@@ -42,5 +63,8 @@ namespace Assets.UltimateIsometricToolkit.Scripts.Core {
 			else
 				Debug.LogError("Missing SortingStrategy on IsoSorting component");
 		}
+
+
+		
 	}
 }

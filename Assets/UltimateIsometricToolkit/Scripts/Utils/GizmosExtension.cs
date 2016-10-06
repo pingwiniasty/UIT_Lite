@@ -1,4 +1,8 @@
-﻿using UnityEngine;
+﻿using System;
+using System.Linq;
+using Assets.UltimateIsometricToolkit.Scripts.Core;
+using JetBrains.Annotations;
+using UnityEngine;
 
 namespace Assets.UltimateIsometricToolkit.Scripts.Utils {
 	public static class GizmosExtension {
@@ -36,5 +40,20 @@ namespace Assets.UltimateIsometricToolkit.Scripts.Utils {
 			DrawIsoLine(to,to + right * arrowHeadLength);
 			DrawIsoLine(to, to + left * arrowHeadLength);
 		}
+
+
+		public static void DrawIsoMesh([NotNull] Mesh mesh, Vector3 position, Vector3 scale) {
+			if (mesh == null)
+				throw new ArgumentNullException("mesh");
+			var verts = mesh.vertices.Select(v => Vector3.Scale(v, scale) + position).ToList();
+			var tris = mesh.triangles;
+			for (var i = 0; i < tris.Length - 3; i += 3) {
+				DrawIsoLine(verts[tris[i]], verts[tris[i + 1]]);
+				DrawIsoLine(verts[tris[i + 1]], verts[tris[i + 2]]);
+				DrawIsoLine(verts[tris[i]], verts[tris[i + 2]]);
+			}
+		}
+
+	
 	}
 }

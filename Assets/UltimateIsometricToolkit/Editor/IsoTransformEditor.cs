@@ -32,6 +32,7 @@ namespace Assets.UltimateIsometricToolkit.Editor {
 		private void OnEnable() {
 			UpdateHandlePos();
 			_instance = target as IsoTransform;
+			_instance.Position = _instance.Position;
 			_instanceFields = ExposeProperties.GetProperties(_instance);
 			if (_instance == null)
 				return;

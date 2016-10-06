@@ -18,53 +18,56 @@ public static class ExposeProperties {
 			EditorGUILayout.BeginHorizontal(emptyOptions);
 			switch (field.Type) {
 				case SerializedPropertyType.Integer: {
-					var oldValue = (int)field.GetValue();
-					var newValue = EditorGUILayout.IntField(field.Name, oldValue, emptyOptions);
-					if (oldValue != newValue)
-						field.SetValue(newValue);
-				}
+						var oldValue = (int)field.GetValue();
+						var newValue = EditorGUILayout.IntField(field.Name, oldValue, emptyOptions);
+						if (oldValue != newValue)
+							field.SetValue(newValue);
+					}
 					break;
 				case SerializedPropertyType.Float: {
-					var oldValue = (float)field.GetValue();
-					var newValue = EditorGUILayout.FloatField(field.Name, oldValue, emptyOptions);
-					if (Math.Abs(oldValue - newValue) > Mathf.Epsilon)
-						field.SetValue(newValue);
-				}
+						var oldValue = (float)field.GetValue();
+						var newValue = EditorGUILayout.FloatField(field.Name, oldValue, emptyOptions);
+						if (Math.Abs(oldValue - newValue) > Mathf.Epsilon)
+							field.SetValue(newValue);
+					}
 					break;
 				case SerializedPropertyType.Boolean: {
-					var oldValue = (bool)field.GetValue();
-					var newValue = EditorGUILayout.Toggle(field.Name, oldValue, emptyOptions);
-					if (oldValue != newValue)
-						field.SetValue(newValue);
-				}
+						var oldValue = (bool)field.GetValue();
+						var newValue = EditorGUILayout.Toggle(field.Name, oldValue, emptyOptions);
+						if (oldValue != newValue)
+							field.SetValue(newValue);
+					}
 					break;
 				case SerializedPropertyType.String: {
-					var oldValue = (string)field.GetValue();
-					var newValue = EditorGUILayout.TextField(field.Name, oldValue, emptyOptions);
-					if (oldValue != newValue)
-						field.SetValue(newValue);
-				}
+						var oldValue = (string)field.GetValue();
+						var newValue = EditorGUILayout.TextField(field.Name, oldValue, emptyOptions);
+						if (oldValue != newValue)
+							field.SetValue(newValue);
+					}
 					break;
 				case SerializedPropertyType.Vector2: {
-					var oldValue = (Vector2)field.GetValue();
-					var newValue = EditorGUILayout.Vector2Field(field.Name, oldValue, emptyOptions);
-					if (oldValue != newValue)
-						field.SetValue(newValue);
-				}
+						var oldValue = (Vector2)field.GetValue();
+						var newValue = EditorGUILayout.Vector2Field(field.Name, oldValue, emptyOptions);
+						if (oldValue != newValue)
+							field.SetValue(newValue);
+					}
 					break;
 				case SerializedPropertyType.Vector3: {
-					var oldValue = (Vector3)field.GetValue();
-					var newValue = EditorGUILayout.Vector3Field(field.Name, oldValue, emptyOptions);
-					if (oldValue != newValue)
-						field.SetValue(newValue);
-				}
+						var oldValue = (Vector3)field.GetValue();
+						var newValue = EditorGUILayout.Vector3Field(field.Name, oldValue, emptyOptions);
+						if (oldValue != newValue)
+							field.SetValue(newValue);
+					}
 					break;
 				case SerializedPropertyType.Enum: {
-					var oldValue = (Enum)field.GetValue();
-					var newValue = EditorGUILayout.EnumPopup(field.Name, oldValue, emptyOptions);
-					if (oldValue != newValue)
-						field.SetValue(newValue);
-				}
+						var oldValue = (Enum)field.GetValue();
+						var newValue = EditorGUILayout.EnumPopup(field.Name, oldValue, emptyOptions);
+						if (oldValue != newValue)
+							field.SetValue(newValue);
+					}
+					break;
+				case SerializedPropertyType.ObjectReference:
+					field.SetValue(EditorGUILayout.ObjectField(field.Name, (UnityEngine.Object)field.GetValue(), field.GetPropertyType(), true, emptyOptions));
 					break;
 			}
 			EditorGUILayout.EndHorizontal();
@@ -128,6 +131,10 @@ public class PropertyField {
 		get {
 			return m_Type;
 		}
+	}
+
+	public Type GetPropertyType() {
+		return m_Info.PropertyType;
 	}
 
 	public String Name {
@@ -195,7 +202,11 @@ public class PropertyField {
 			return true;
 		}
 
-		return false;
+		// COMMENT OUT to NOT expose custom objects/types
+		propertyType = SerializedPropertyType.ObjectReference;
+		return true;
+
+		//return false;
 
 	}
 

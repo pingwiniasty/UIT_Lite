@@ -1,9 +1,11 @@
 ﻿using System.Collections.Generic;
 using Assets.UltimateIsometricToolkit.Scripts.External;
 using Assets.UltimateIsometricToolkit.Scripts.Utils;
+using UnityEditor;
 using UnityEngine;
 
 namespace Assets.UltimateIsometricToolkit.Scripts.Core {
+
 
 	/// <summary>
 	/// Isometric transform component
@@ -34,7 +36,9 @@ namespace Assets.UltimateIsometricToolkit.Scripts.Core {
 				var delta = value - _position;
 				_position = value;
 				IsoSorting.Instance.Resolve(this);
-
+#if UNITY_EDITOR
+				EditorUtility.SetDirty(this);
+#endif 
 				//apply delta to each child
 				if (transform.childCount != _lastChildCount) //indicates hirarchy for this isoObj changed
 					UpdateChildren();
@@ -55,6 +59,9 @@ namespace Assets.UltimateIsometricToolkit.Scripts.Core {
 			get { return _size; }
 			set {
 				_size = value;
+#if UNITY_EDITOR
+				EditorUtility.SetDirty(this);
+#endif 
 			}
 		}
 
@@ -103,17 +110,10 @@ namespace Assets.UltimateIsometricToolkit.Scripts.Core {
 		}
 
 		#region Gizmos
-		public void DrawScreenRect() {
-			var screeRect = GetScreenRect();
-			Gizmos.DrawLine(screeRect.min,screeRect.min + Vector2.right * screeRect.width); // lower bar
-			Gizmos.DrawLine(screeRect.min + Vector2.up * screeRect.height, screeRect.max); // upper bar
-			Gizmos.DrawLine(screeRect.min, screeRect.min + Vector2.up*screeRect.height); //left bar
-			Gizmos.DrawLine(screeRect.min + Vector2.right * screeRect.width, screeRect.max); // right bar
-		}
-
+	
 		public void Draw() {
 				Gizmos.color = Color.white;
-				GizmosExtension.DrawIsoWireCube(Position,Size);
+				GizmosExtension.DrawIsoWireCube(Position, Size);
 		}
 
 		
@@ -122,7 +122,6 @@ namespace Assets.UltimateIsometricToolkit.Scripts.Core {
 			if (!ShowBounds)
 				return;
 			Draw();
-			//DrawScreenRect(); 
 		}
 #endregion
 		/// <summary>
@@ -133,18 +132,6 @@ namespace Assets.UltimateIsometricToolkit.Scripts.Core {
 			if (delta == Vector3.zero)
 				return;
 			Position += delta;
-		}
-
-		/// <summary>
-		/// Calculates the bounding box screen rect for this isoTransform
-		/// </summary>
-		/// <returns></returns>
-		private Rect GetScreenRect() {
-			var left = Isometric.IsoToScreen(Position + new Vector3(-Size.x / 2, -Size.y / 2, Size.z / 2)).x;
-			var right = Isometric.IsoToScreen(Position + new Vector3(Size.x / 2, -Size.y / 2, -Size.z / 2)).x;
-			var bottom = Isometric.IsoToScreen(Position - new Vector3(Size.x / 2, Size.y / 2, Size.z / 2)).y;
-			var top = Isometric.IsoToScreen(Position + new Vector3(Size.x / 2, Size.y / 2, Size.z / 2)).y;
-			return new Rect(left, bottom, right - left, top - bottom);
 		}
 	}
 }

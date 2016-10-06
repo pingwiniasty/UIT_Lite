@@ -2,6 +2,7 @@
 using UnityEditor;
 using System.Linq;
 using Assets.UltimateIsometricToolkit.Scripts.Core;
+using UnityEngine.Assertions.Comparers;
 
 namespace UltimateIsometricToolkit {
 	public class IsoSnapping : EditorWindow {
@@ -15,6 +16,21 @@ namespace UltimateIsometricToolkit {
 		static void Init() {
 			var window = (IsoSnapping)GetWindow(typeof(IsoSnapping));
 			window.maxSize = new Vector2(400, 200);
+			
+		}
+
+		void OnEnable() {
+			var values = EditorPrefs.GetString("snappingVector").Split(';');
+			SnappingVector.x = float.Parse(values[0]);
+			SnappingVector.y = float.Parse(values[1]);
+			SnappingVector.z = float.Parse(values[2]);
+
+			DoSnap = EditorPrefs.GetBool("doSnap");
+		}
+
+		void OnDisable() {
+			EditorPrefs.SetString("snappingVector", SnappingVector.x + ";" + SnappingVector.y + ";" + SnappingVector.z + ";");
+			EditorPrefs.SetBool("doSnap", DoSnap);
 		}
 
 		public void OnGUI() {

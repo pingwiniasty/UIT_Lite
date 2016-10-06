@@ -8,7 +8,7 @@ namespace Assets.UltimateIsometricToolkit.Scripts.Utils {
 		[SerializeField]
 		private static Matrix4x4 _isoMatrix;
 		[SerializeField]
-		private static float _isoAngle;
+		public static float _isoAngle = 26.565f;
 
 		public static readonly Vector2 North = new Vector2(1,0); 
 		public static readonly Vector2 South = North*-1;
@@ -18,41 +18,52 @@ namespace Assets.UltimateIsometricToolkit.Scripts.Utils {
 		public static readonly Vector2 NorthWest = North + West;
 		public static readonly Vector2 SouthEast = South + East;
 		public static readonly Vector2 SouthWest = South + West;
-		
+
+		public static float IsoAngle {
+			get { return _isoAngle; }
+			set {
+				_isoAngle = value;
+				_isoMatrix = GetIsoMatrix(value);
+			}
+		}
+
+		private static Matrix4x4 IsoMatrix {
+			get {
+				if (_isoMatrix == Matrix4x4.identity)
+					_isoMatrix = GetIsoMatrix(IsoAngle);
+				return _isoMatrix;
+			}
+		}
+
 		/// <summary>
-		/// Returns a vector from isometric space to screenspace
+		/// Rotates a vector from the isometric coordinate system to the unity coordinate system
 		/// where xy are the screen coordinates in unity units
 		/// z can be neglected.
 		/// </summary>
 		/// <param name="isoVector">Isometric Vector</param>
 		/// <returns>Vector in screen coordinates</returns>
 		public static Vector3 IsoToScreen(Vector3 isoVector) {
-			var screenPos = getIsoMatrix(27).MultiplyPoint(isoVector);
-			//screenPos = new Vector3(screenPos.x, screenPos.y, Camera.main.nearClipPlane);
-			return screenPos;
+			return GetIsoMatrix(IsoAngle).MultiplyPoint(isoVector);
 		}
-	
+
+		/// <summary>
+		///  Rotates a vector from unity's coordinate system to the isometric coordinate system
+		/// </summary>
+		/// <param name="vector"></param>
+		/// <returns></returns>
+		public static Vector3 ScreenToIso(Vector3 vector) {
+			return GetIsoMatrix(IsoAngle).inverse.MultiplyPoint(vector);
+		}
+
 		/// <summary>
 		/// returns the matrix that convers from isometric space to unity space
 		/// </summary>
-		/// <param name="isoAngle"></param>
 		/// <returns></returns>
-		public static Matrix4x4 getIsoMatrix(float isoAngle) {
-			if (!(Mathf.Abs(isoAngle - _isoAngle) > Mathf.Epsilon))
-				return _isoMatrix;
-			_isoMatrix = Matrix4x4.identity;
-			_isoAngle = isoAngle;
-			var angleInRad = Mathf.Deg2Rad * isoAngle;
-			_isoMatrix.m00 = Mathf.Cos(angleInRad);
-			_isoMatrix.m02 = -Mathf.Cos(angleInRad);
-			_isoMatrix.m01 = 0;
-			_isoMatrix.m10 = Mathf.Sin(angleInRad);
-			_isoMatrix.m12 = Mathf.Sin(angleInRad);
-			_isoMatrix.m11 = 1;
-			_isoMatrix.m20 = 1;
-			_isoMatrix.m22 = 1;
-			_isoMatrix.m21 = -1;
-			return _isoMatrix;
+		private static Matrix4x4 GetIsoMatrix(float isoAngle) {
+			var isoAngleInRad = Mathf.Deg2Rad * isoAngle;
+			var arcsintan = Mathf.Asin(Mathf.Tan(isoAngleInRad)) * Mathf.Rad2Deg;
+			var rot = Quaternion.AngleAxis(-arcsintan, Vector3.right) * Quaternion.AngleAxis(-45, Vector3.up);
+			return Matrix4x4.TRS(Vector3.zero, rot, Vector3.one);
 		}
 
 		/// <summary>
@@ -68,7 +79,7 @@ namespace Assets.UltimateIsometricToolkit.Scripts.Utils {
 		/// Finds the isometric position using a screenspacePoint in Pixels and an offset on the z Axis
 		/// </summary>
 		/// <param name="screenSpacePoint"></param>
-		/// <param name="<Offset"></param>
+		/// <param name="<Offset">/></param>
 		/// <returns>The isometric position (x,y,zOffset), null instead</returns>
 		public static Vector3? CreateXYZfromZ(Vector2 screenSpacePoint, float zOffset) {
 			return CreateXYZ(screenSpacePoint, new Vector3(0, 0, 1), zOffset);
@@ -79,7 +90,6 @@ namespace Assets.UltimateIsometricToolkit.Scripts.Utils {
 		/// Note: May use this to find an isometric position on the floor at screenspacePoint that is yOffset away from the camera on the y-Axis 
 		/// </summary>
 		/// <param name="screenSpacePoint"></param>
-		/// <param name="zOffset"></param>
 		/// <returns>The isometric position (x,yOffset,y), null instead</returns>
 		public static Vector3? CreateXYZfromY(Vector2 screenSpacePoint, float yOffset) {
 			return CreateXYZ(screenSpacePoint, new Vector3(0, -1, 0), yOffset);
@@ -90,7 +100,7 @@ namespace Assets.UltimateIsometricToolkit.Scripts.Utils {
 
 			var plane = new Plane(planeNormalVector, offset); //isometric plane that goes through Offset
 
-			var matrixInverse = getIsoMatrix(_isoAngle).inverse;
+			var matrixInverse = IsoMatrix.inverse;
 			var isoRay = new Ray(matrixInverse.MultiplyPoint(worldPos), matrixInverse.MultiplyPoint(new Vector3(0, 0, 1))); // isometric ray at screenspacepoint
 
 			float distance;
@@ -103,5 +113,31 @@ namespace Assets.UltimateIsometricToolkit.Scripts.Utils {
 		public Vector3 ScreenToIsoPoint(Vector2 screenSpacePoint, float zOffset = 0f) {
 			return CreateXYZfromZ(screenSpacePoint, zOffset).Value;
 		}
+
+
+		/// <summary>
+		/// Utility function for raycasting from a screenspace point 
+		/// </summary>
+		/// <param name="screenSpacePoint"></param>
+		/// <returns></returns>
+		public static Ray ScreenSpaceToIsoRay(Vector2 screenSpacePoint) {
+			var ray = Camera.main.ScreenPointToRay(screenSpacePoint);
+			
+			//rotate the origin and direction to the isometric coordinate system 
+			var isoRayOrigin = ScreenToIso(ray.origin);
+			var isoRayDirection = ScreenToIso(ray.direction);
+			
+			return new Ray(isoRayOrigin,isoRayDirection);
+		}
+
+		/// <summary>
+		/// Utility function for raycasting from the mouse position
+		/// </summary>
+		/// <param name="screenSpacePoint"></param>
+		/// <returns></returns>
+		public static Ray MouseToIsoRay() {
+			return ScreenSpaceToIsoRay(Input.mousePosition);
+		}
+
 	}
 }
